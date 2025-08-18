@@ -1,0 +1,126 @@
+groups:
+  - name: pi-system-alerts
+    rules:
+      # CPU Usage Alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% for more than 2 minutes"
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% for more than 1 minute"
+
+      # Memory Usage Alerts
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}% for more than 2 minutes"
+
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}% for more than 1 minute"
+
+      # Root Filesystem Space Alerts
+      - alert: RootFSLowSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 20
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low root filesystem space on {{ $labels.instance }}"
+          description: "Root filesystem has {{ $value }}% free space"
+
+      - alert: RootFSCriticalSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical root filesystem space on {{ $labels.instance }}"
+          description: "Root filesystem has only {{ $value }}% free space"
+
+      # Temperature Alerts (if sensors are available)
+      - alert: HighCPUTemperature
+        expr: node_hwmon_temp_celsius{chip="cpu_thermal-thermal_zone0"} > 70
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU temperature on {{ $labels.instance }}"
+          description: "CPU temperature is {{ $value }}°C"
+
+      - alert: CriticalCPUTemperature
+        expr: node_hwmon_temp_celsius{chip="cpu_thermal-thermal_zone0"} > 80
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical CPU temperature on {{ $labels.instance }}"
+          description: "CPU temperature is {{ $value }}°C"
+
+      # NVMe Temperature Alerts (if available)
+      - alert: HighNVMETemperature
+        expr: node_hwmon_temp_celsius{chip=~"nvme.*"} > 70
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High NVMe temperature on {{ $labels.instance }}"
+          description: "NVMe temperature is {{ $value }}°C"
+
+      - alert: CriticalNVMETemperature
+        expr: node_hwmon_temp_celsius{chip=~"nvme.*"} > 80
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical NVMe temperature on {{ $labels.instance }}"
+          description: "NVMe temperature is {{ $value }}°C"
+
+      # Load Average Alerts
+      - alert: HighLoadAverage
+        expr: node_load1 > count(node_cpu_seconds_total{mode="idle"}) * 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High load average on {{ $labels.instance }}"
+          description: "1-minute load average is {{ $value }}"
+
+      - alert: CriticalLoadAverage
+        expr: node_load1 > count(node_cpu_seconds_total{mode="idle"}) * 1.2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical load average on {{ $labels.instance }}"
+          description: "1-minute load average is {{ $value }}"
+
+      # System Uptime Alert
+      - alert: SystemRecentlyRebooted
+        expr: (time() - node_boot_time_seconds) < 300
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "System recently rebooted on {{ $labels.instance }}"
+          description: "System has been up for {{ $value }} seconds"

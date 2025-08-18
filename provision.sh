@@ -10,6 +10,9 @@ mkdir -p "$MONITORING_STACK_DIR"
 mkdir -p "$MONITORING_STACK_DIR/prometheus_data"
 mkdir -p "$MONITORING_STACK_DIR/grafana_data"
 
+# Create prometheus rules directory
+mkdir -p "$MONITORING_STACK_DIR/prometheus/rules"
+
 rsync -av --exclude=".git" --exclude="provision.sh" --exclude="README.md" . "$MONITORING_STACK_DIR"
 
 cp -f "$MONITORING_STACK_DIR/systemd/monitoring.service" "/etc/systemd/system/monitoring.service"
