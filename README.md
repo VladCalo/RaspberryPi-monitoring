@@ -17,11 +17,34 @@ sudo bash provision.sh
 
 ## 🏗️ Architecture Overview
 
-This is a **3-service monitoring stack** that runs as a managed systemd service:
+This is a **4-service monitoring stack** that runs as a managed systemd service:
 
-- **Prometheus** (Port 9090) - Metrics collection and storage
+- **Prometheus** (Port 9090) - Metrics collection, storage, and alerting
+- **Alertmanager** (Port 9093) - Alert notifications and management
 - **Grafana** (Port 3000) - Dashboard visualization  
 - **Node Exporter** (Port 9100) - System metrics collection
+
+## 🚨 Alerting System
+
+The stack includes **automatic alerting** for critical system conditions:
+
+### **Performance Alerts**
+- **CPU Usage**: Warning at 90%, Critical at 95%
+- **Memory Usage**: Warning at 85%, Critical at 95%
+- **Load Average**: Warning at 80% of CPU cores, Critical at 120%
+
+### **System Health Alerts**
+- **Root Filesystem**: Warning at 20% free, Critical at 10% free
+- **CPU Temperature**: Warning at 70°C, Critical at 80°C
+- **NVMe Temperature**: Warning at 70°C, Critical at 80°C
+- **System Reboots**: Info when system recently restarted
+
+### **Viewing Alerts**
+**⚠️  Note: Alert notifications are not yet implemented. View alerts in the web UIs:**
+
+- **Prometheus Alerts**: http://your-pi-ip:9090/alerts - View all alert statuses
+- **Prometheus Rules**: http://your-pi-ip:9090/rules - View alert rule configurations  
+- **Alertmanager UI**: http://your-pi-ip:9093 - View alert grouping and management
 
 ## 📊 What Gets Monitored
 
@@ -112,9 +135,10 @@ After startup, you can access:
 ## 🐳 Docker Details
 
 - **Prometheus**: 256MB RAM limit, 50% CPU limit
+- **Alertmanager**: 128MB RAM limit, 20% CPU limit
 - **Grafana**: 256MB RAM limit, 30% CPU limit  
 - **Node Exporter**: 64MB RAM limit, 20% CPU limit
-- **Total stack**: ~576MB RAM max, minimal CPU impact
+- **Total stack**: ~704MB RAM max, minimal CPU impact
 
 ## 🔍 Troubleshooting
 
