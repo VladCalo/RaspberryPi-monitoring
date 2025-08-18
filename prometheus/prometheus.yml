@@ -1,6 +1,9 @@
 global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+  scrape_interval: 60s  # Increased from 15s to reduce CPU usage
+  evaluation_interval: 60s  # Increased from 15s to reduce CPU usage
+  scrape_timeout: 30s  # Add timeout to prevent hanging scrapes
+  external_labels:
+    monitor: 'pi-monitoring'
 
 rule_files:
   - "rules/*.yml"
@@ -9,11 +12,19 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+    scrape_interval: 60s  # Reduced frequency for self-monitoring
+    scrape_timeout: 10s
 
   - job_name: 'node-exporter'
     static_configs:
       - targets: ['node-exporter:9100']
-    scrape_interval: 10s
+    scrape_interval: 60s  # Increased from 10s to reduce load
+    scrape_timeout: 10s
+    # Don't filter metrics - collect all to ensure CPU data is available
+    # metric_relabel_configs:
+    #   - source_labels: [__name__]
+    #     regex: 'node_(cpu|memory|disk|network|load|uname|time|boot_time|os_info|textfile)_.*'
+    #     action: keep
 
 alerting:
   alertmanagers:

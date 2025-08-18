@@ -12,7 +12,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
+      - '--storage.tsdb.retention.time=168h'  # 7 days retention
       - '--web.enable-lifecycle'
     restart: unless-stopped
     networks:
@@ -20,8 +20,16 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "5m"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 256M  # Limit memory usage
+          cpus: '0.5'   # Limit to 50% of one CPU core
+        reservations:
+          memory: 128M
+          cpus: '0.25'
 
   grafana:
     image: grafana/grafana:latest
@@ -35,14 +43,27 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_ANALYTICS_REPORTING_ENABLED=false  # Disable analytics
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false  # Disable update checks
+      - GF_SECURITY_DISABLE_GRAVATAR=true      # Disable Gravatar
+      - GF_LOG_LEVEL=warn                      # Reduce logging
+      - GF_SERVER_HTTP_MAX_CONNECTIONS=10      # Limit connections
     restart: unless-stopped
     networks:
       - monitoring
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "5m"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 256M  # Limit memory usage
+          cpus: '0.3'   # Limit to 30% of one CPU core
+        reservations:
+          memory: 128M
+          cpus: '0.15'
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -58,14 +79,27 @@ services:
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.filesystem.fs-types-exclude=^(sys|proc|auto)fs$$'
+      - '--collector.netdev.device-exclude=^(lo|docker|veth|br-|virbr|vmnet)$$'
+      - '--collector.diskstats.device-exclude=^(ram|loop|fd|(h|s|v|xv)d[a-z]|nvme\\d+n\\d+p)\\d+$$'
+      - '--web.listen-address=:9100'
+      - '--web.max-requests=40'
     restart: unless-stopped
     networks:
       - monitoring
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "3m"
+        max-file: "1"
+    deploy:
+      resources:
+        limits:
+          memory: 64M   # Limit memory usage
+          cpus: '0.2'   # Limit to 20% of one CPU core
+        reservations:
+          memory: 32M
+          cpus: '0.1'
 
 volumes:
   prometheus_data:
