@@ -12,7 +12,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
+      - '--storage.tsdb.retention.time=168h'  # 7 days retention
       - '--web.enable-lifecycle'
     restart: unless-stopped
     networks:
@@ -20,8 +20,16 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "5m"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 256M  # Limit memory usage
+          cpus: '0.5'   # Limit to 50% of one CPU core
+        reservations:
+          memory: 128M
+          cpus: '0.25'
 
   grafana:
     image: grafana/grafana:latest
@@ -41,8 +49,16 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "5m"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 256M  # Limit memory usage
+          cpus: '0.3'   # Limit to 30% of one CPU core
+        reservations:
+          memory: 128M
+          cpus: '0.15'
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -64,8 +80,16 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "3m"
+        max-file: "1"
+    deploy:
+      resources:
+        limits:
+          memory: 64M   # Limit memory usage
+          cpus: '0.2'   # Limit to 20% of one CPU core
+        reservations:
+          memory: 32M
+          cpus: '0.1'
 
 volumes:
   prometheus_data:
