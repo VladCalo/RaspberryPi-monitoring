@@ -3,6 +3,7 @@
 set -ex
 
 MONITORING_STACK_DIR="/opt/monitoring"
+rm -rf "$MONITORING_STACK_DIR"
 mkdir -p "$MONITORING_STACK_DIR"
 
 # Create directories for Docker volumes
@@ -16,7 +17,13 @@ rm -rf "$MONITORING_STACK_DIR/systemd"
 chmod +x "$MONITORING_STACK_DIR/manage.sh"
 
 # Set up automatic cleanup every day at 2 AM to prevent root filesystem bloat
-(crontab -l 2>/dev/null; echo "0 2 * * * /opt/monitoring/manage.sh cleanup > /dev/null 2>&1") | crontab -
+# Only add if not already present
+if ! sudo crontab -l 2>/dev/null | grep -q "manage.sh cleanup"; then
+    (sudo crontab -l 2>/dev/null; echo "0 2 * * * /opt/monitoring/manage.sh cleanup > /dev/null 2>&1") | sudo crontab -
+    echo "Cron job added for daily cleanup"
+else
+    echo "Cron job already exists, skipping"
+fi
 
 systemctl daemon-reload
 systemctl enable monitoring.service

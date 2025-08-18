@@ -43,11 +43,6 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_ANALYTICS_REPORTING_ENABLED=false  # Disable analytics
-      - GF_ANALYTICS_CHECK_FOR_UPDATES=false  # Disable update checks
-      - GF_SECURITY_DISABLE_GRAVATAR=true      # Disable Gravatar
-      - GF_LOG_LEVEL=warn                      # Reduce logging
-      - GF_SERVER_HTTP_MAX_CONNECTIONS=10      # Limit connections
     restart: unless-stopped
     networks:
       - monitoring
@@ -79,11 +74,6 @@ services:
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-      - '--collector.filesystem.fs-types-exclude=^(sys|proc|auto)fs$$'
-      - '--collector.netdev.device-exclude=^(lo|docker|veth|br-|virbr|vmnet)$$'
-      - '--collector.diskstats.device-exclude=^(ram|loop|fd|(h|s|v|xv)d[a-z]|nvme\\d+n\\d+p)\\d+$$'
-      - '--web.listen-address=:9100'
-      - '--web.max-requests=40'
     restart: unless-stopped
     networks:
       - monitoring
