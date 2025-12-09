@@ -1,184 +1,79 @@
-# Raspberry Pi 5 Lightweight Monitoring Stack
+# Raspberry Pi 5 Monitoring Stack
 
-A minimal monitoring solution designed specifically for Raspberry Pi 5 with **low system load** and **minimal resource usage**. This stack provides basic system monitoring without overwhelming your Pi's limited resources.
+Lightweight Prometheus + Grafana monitoring for Raspberry Pi.
 
 ## Quick Start
 
 ```bash
-# Clone the repository
-git clone <REPO>
-cd RaspberryPi-monitoring
-
-# Run the provisioning script (IMPORTANT: use sudo!)
 sudo bash provision.sh
 ```
 
-**IMPORTANT:** Always use `sudo` when running the provision script. The monitoring stack needs to create system directories and configure systemd services. Monitoring stack configuration files will be moved to **/opt/monitoring**
+Stack gets installed to `/opt/monitoring` and runs as a systemd service.
 
-## Architecture Overview
+## Services
 
-This is a **4-service monitoring stack** that runs as a managed systemd service:
+- Prometheus (9090) - metrics & alerting
+- Alertmanager (9093) - alert management
+- Grafana (3000) - dashboards (admin/admin)
+- Node Exporter (9100) - system metrics
 
-- **Prometheus** (Port 9090) - Metrics collection, storage, and alerting
-- **Alertmanager** (Port 9093) - Alert notifications and management
-- **Grafana** (Port 3000) - Dashboard visualization
-- **Node Exporter** (Port 9100) - System metrics collection
+## Alerts
 
-## Alerting System
+**Performance**:
 
-The stack includes **automatic alerting** for critical system conditions:
+- CPU: warning 90%, critical 95%
+- Memory: warning 85%, critical 95%
+- Load: warning 80%, critical 120% of cores
 
-### **Performance Alerts**
+**System Health**:
 
-- **CPU Usage**: Warning at 90%, Critical at 95%
-- **Memory Usage**: Warning at 85%, Critical at 95%
-- **Load Average**: Warning at 80% of CPU cores, Critical at 120%
+- Root filesystem: warning 20% free, critical 10%
+- CPU temp: warning 70°C, critical 80°C
+- NVMe temp: warning 70°C, critical 80°C
 
-### **System Health Alerts**
+View alerts at `http://<pi-ip>:9090/alerts` or `http://<pi-ip>:9093`
 
-- **Root Filesystem**: Warning at 20% free, Critical at 10% free
-- **CPU Temperature**: Warning at 70°C, Critical at 80°C
-- **NVMe Temperature**: Warning at 70°C, Critical at 80°C
-- **System Reboots**: Info when system recently restarted
+## What's Monitored
 
-### **Viewing Alerts**
+- CPU (usage, frequency, load averages)
+- Memory (RAM, swap, buffers, cache)
+- Disk (I/O, latency, throughput, filesystem usage)
+- Network (traffic, errors, interface status)
+- Hardware (temperatures, uptime)
 
-**Note: Alert notifications are not yet implemented. View alerts in the web UIs:**
-
-- **Prometheus Alerts**: http://your-pi-ip:9090/alerts - View all alert statuses
-- **Prometheus Rules**: http://your-pi-ip:9090/rules - View alert rule configurations
-- **Alertmanager UI**: http://your-pi-ip:9093 - View alert grouping and management
-
-## What Gets Monitored
-
-### **System Performance**
-
-- **CPU usage** - All CPU modes (user, system, idle, iowait, irq, softirq, steal, guest)
-- **CPU frequency** - Current, min, max scaling frequencies
-- **Load averages** - 1, 5, and 15-minute load averages
-- **CPU count** - Number of CPU cores
-
-### **Memory & Storage**
-
-- **RAM usage** - Total, free, used, cached, buffers, swap
-- **Memory breakdown** - Active/inactive, anon/file, slab, page tables
-- **Huge pages** - Free, reserved, surplus, total
-- **Virtual memory** - Vmalloc usage, direct mapping
-- **Disk I/O** - Read/write operations, bytes, time, queue depth
-- **Disk performance** - IOPS, latency, throughput, discard operations
-
-### **Network & Connectivity**
-
-- **Network traffic** - Receive/transmit bytes, packets, errors
-- **Network performance** - Speed, utilization, MTU, carrier status
-- **Network interfaces** - Up/down status, drops, collisions, compression
-
-### **System Health**
-
-- **Filesystem usage** - Mount points, space, inodes
-- **Process metrics** - Running processes, context switches
-- **System info** - Uptime, boot time, OS version, kernel info
-- **Hardware** - Temperature sensors, power consumption (if available)
-
-### **Advanced Metrics**
-
-- **Memory pressure** - Reclaimable, unevictable, mlocked memory
-- **I/O patterns** - Read/write merging, flush requests, discard operations
-- **Network quality** - Error rates, drop rates, collision detection
-
-## Performance Optimizations
-
-The stack is configured for **minimal resource usage**:
-
-- **Scrape intervals**: 15 seconds (reduced from default)
-- **Data retention**: 7 days (prevents disk bloat)
-- **Resource limits**: Strict CPU/RAM limits per container
-- **Log rotation**: Automatic cleanup of old logs
-
-## Management Commands
+## Management
 
 ```bash
-# Check stack status
 cd /opt/monitoring
-
-./manage.sh status
-
-# Start the monitoring stack
-./manage.sh start
-
-# Stop the monitoring stack
-./manage.sh stop
-
-# Restart the stack
-./manage.sh restart
-
-# Clean up old logs and data (manual)
-./manage.sh cleanup
-
-# Show help
-./manage.sh help
+./manage.sh status|start|stop|restart|cleanup|help
 ```
 
-## Automatic Cleanup
+## Resource Limits
 
-A **cron job runs daily at 2:00 AM** to:
+- Prometheus: 256MB RAM, 50% CPU
+- Alertmanager: 128MB RAM, 20% CPU
+- Grafana: 256MB RAM, 30% CPU
+- Node Exporter: 64MB RAM, 20% CPU
 
-- Delete logs older than 7 days
-- Clean up old Prometheus data
-- Remove old Docker artifacts
-- Prevent root filesystem bloat
+Total: ~704MB RAM max
 
-## Accessing the Services
+## Config
 
-After startup, you can access:
-
-- **Grafana Dashboards**: http://your-pi-ip:3000
-  - Username: `admin`
-  - Password: `admin`
-- **Prometheus**: http://your-pi-ip:9090
-- **Node Exporter Metrics**: http://your-pi-ip:9100/metrics
-
-## Docker Details
-
-- **Prometheus**: 256MB RAM limit, 50% CPU limit
-- **Alertmanager**: 128MB RAM limit, 20% CPU limit
-- **Grafana**: 256MB RAM limit, 30% CPU limit
-- **Node Exporter**: 64MB RAM limit, 20% CPU limit
-- **Total stack**: ~704MB RAM max, minimal CPU impact
+- Scrape interval: 15s
+- Data retention: 7 days
+- Auto cleanup: daily at 2:00 AM (logs, old data, docker artifacts)
 
 ## Troubleshooting
 
-**Service won't start?**
-
 ```bash
-# Check service status
 sudo systemctl status monitoring.service
-
-# Check logs
 sudo journalctl -xeu monitoring.service
-```
-
-**Ports already in use?**
-
-```bash
-# Check what's using the ports
 sudo netstat -tlnp | grep -E ':(3000|9090|9100)'
-```
-
-**Disk space issues?**
-
-```bash
-# Run manual cleanup
-./manage.sh cleanup
-
-# Check disk usage
-df -h /
+./manage.sh cleanup  # disk space issues
 ```
 
 ## Notes
 
-- This stack is designed for **Raspberry Pi 5** but should work on Pi 4
-- **Docker is required** - make sure it's installed and running
-- The stack automatically starts on boot via systemd
-- All data is stored locally on your Pi's storage
-- Designed for **home/homelab use** with minimal resource overhead
+- Designed for Pi 5, should work on Pi 4
+- Docker required
+- Auto-starts on boot via systemd
